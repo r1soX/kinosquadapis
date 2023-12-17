@@ -14,7 +14,8 @@ async function bootstrap() {
 
   const corsWhitelist = [
     'http://localhost:3000',
-    configSerivce.get('CLIENT_URL'),
+    'https://kinosquad.ru',
+    'https://www.kinosquad.ru',
   ];
 
   let test = 1;
