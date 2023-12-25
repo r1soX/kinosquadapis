@@ -1,6 +1,5 @@
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
-import * as cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
 import { ConfigService } from '@nestjs/config';
 
@@ -10,12 +9,10 @@ async function bootstrap() {
   const configSerivce = app.get(ConfigService);
 
   app.useGlobalPipes(new ValidationPipe());
-  app.use(cookieParser());
 
   const corsWhitelist = [
     'http://localhost:3000',
-    'https://kinosquad.ru',
-    'https://www.kinosquad.ru',
+    configSerivce.get('CLIENT_URL'),
   ];
 
   app.enableCors({

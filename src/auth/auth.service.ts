@@ -5,6 +5,7 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
+import { OAuth2Client } from 'google-auth-library';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { UserService } from 'src/user/user.service';
@@ -12,7 +13,6 @@ import { PasswordService } from './password.service';
 import { Tokens } from './models/tokens.model';
 import { SignUpInput } from './dto/sign-up.input';
 import { User } from 'src/user/user.model';
-import { HALF_HOUR, ONE_MONTH } from 'src/common/token.const';
 
 @Injectable()
 export class AuthService {
@@ -76,6 +76,37 @@ export class AuthService {
     });
   }
 
+  async signInGoogle(code: string): Promise<Tokens> {
+    const oAuth2Client = new OAuth2Client(
+      process.env.GOOGLE_CLIENT_ID,
+      process.env.GOOGLE_CLIENT_SECRET,
+      'postmessage',
+    );
+
+    const { tokens } = await oAuth2Client.getToken(code);
+
+    const decodedUser = this.jwtService.decode(tokens.id_token) as any;
+
+    const user = await this.userService.findByEmail(decodedUser.email);
+
+    if (!user) {
+      const newUser = await this.userService.createUser({
+        googleId: decodedUser.sub,
+        name: decodedUser.name,
+        email: decodedUser.email,
+        avatar: decodedUser.picture,
+      });
+
+      return this.generateTokens({
+        userId: newUser._id,
+      });
+    }
+
+    return this.generateTokens({
+      userId: user._id,
+    });
+  }
+
   async validateUser(userId: string): Promise<User> {
     return await this.userService.findById(userId);
   }
@@ -96,14 +127,14 @@ export class AuthService {
   private generateAccessToken(payload: { userId: string }): string {
     return this.jwtService.sign(payload, {
       secret: this.configService.get('AT_SECRET'),
-      expiresIn: HALF_HOUR,
+      expiresIn: '30m',
     });
   }
 
   private generateRefreshToken(payload: { userId: string }): string {
     return this.jwtService.sign(payload, {
       secret: this.configService.get('RT_SECRET'),
-      expiresIn: ONE_MONTH,
+      expiresIn: '30d',
     });
   }
 
