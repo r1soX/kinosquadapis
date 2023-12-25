@@ -18,14 +18,6 @@ async function bootstrap() {
     'https://www.kinosquad.ru',
   ];
 
-  let test = 1;
-
-  //Пробую зробити щоб сервер не засинав
-  setInterval(() => {
-    console.log('test', test);
-    test += 1;
-  }, 10 * 1 * 1000);
-
   app.enableCors({
     credentials: true,
     origin: corsWhitelist,
